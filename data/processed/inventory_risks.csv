@@ -1,0 +1,6 @@
+sku,product,forecast_units,avg_daily_demand,current_stock,days_of_cover,reorder_point,recommended_order,risk,priority
+BREAD-WHT,White Bread,3210,107.0,150,1.4018691588785046,1070,920,Stockout,Critical
+MILK-1L,Milk 1L,4577,152.56666666666666,420,2.752894909329255,1526,1106,Stockout,Critical
+RICE-5K,Rice 5kg,2246,74.86666666666666,300,4.007123775601069,749,449,Stockout,High
+SHAM-400,Shampoo 400ml,1182,39.4,205,5.203045685279188,394,189,Stockout,High
+CHIP-200,Potato Chips 200g,1773,59.1,620,10.490693739424703,591,0,Healthy,Low

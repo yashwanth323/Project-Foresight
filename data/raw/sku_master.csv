@@ -1,0 +1,6 @@
+sku_id,product,category,subcategory,unit_cost,list_price,launch_date
+MILK-1L,Milk 1L,Dairy,Fresh Milk,30.0,42.0,2025-01-01
+RICE-5K,Rice 5kg,Grocery,Grains,280.0,360.0,2025-01-01
+BREAD-WHT,White Bread,Bakery,Sliced Bread,22.0,34.0,2025-01-01
+SHAM-400,Shampoo 400ml,Personal Care,Hair Care,140.0,198.0,2025-01-01
+CHIP-200,Potato Chips 200g,Snacks,Chips,32.0,48.0,2025-01-01
