@@ -29,8 +29,6 @@ def init_session():
         st.session_state.splash_shown = False
     if "logout_message" not in st.session_state:
         st.session_state.logout_message = None
-    if "profile_picture" not in st.session_state:
-        st.session_state.profile_picture = None
         
     # Shared Data cache in session state
     if "raw_data" not in st.session_state:
@@ -118,13 +116,12 @@ def load_data(force_reload=False):
             st.error(f"Risk Scoring Failed: {exc}")
             st.stop()
 
-def login_user(username: str, email: str, role: str, profile_picture: str | None = None):
+def login_user(username: str, email: str, role: str):
     """Store user information in session state upon successful login."""
     st.session_state.logged_in = True
     st.session_state.username = username
     st.session_state.email = email
     st.session_state.role = role
-    st.session_state.profile_picture = profile_picture
     st.session_state.login_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     st.session_state.logout_message = None
     # Reset data cache to force load on next display
@@ -141,7 +138,6 @@ def logout_user():
     st.session_state.username = None
     st.session_state.email = None
     st.session_state.role = None
-    st.session_state.profile_picture = None
     st.session_state.login_time = None
     st.session_state.logout_message = "You have been logged out successfully."
     st.session_state.raw_data = None
@@ -172,7 +168,6 @@ def render_header():
     avatar_char = st.session_state.username[0].upper() if st.session_state.username else "U"
     badge_class = get_role_badge_class(st.session_state.role)
     current_date = datetime.now().strftime("%B %d, %Y")
-    profile_pic = st.session_state.get("profile_picture")
     
     # Avatar gradient based on role
     if st.session_state.role == "Administrator":
@@ -184,16 +179,11 @@ def render_header():
     else:
         avatar_bg = "linear-gradient(135deg, #059669 0%, #34D399 100%)"
         avatar_glow = "rgba(5, 150, 105, 0.4)"
-    
-    if profile_pic:
-        avatar_html = f'<img src="{profile_pic}" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 12px {avatar_glow};" />'
-    else:
-        avatar_html = f'<div class="user-avatar" style="background: {avatar_bg}; box-shadow: 0 0 12px {avatar_glow};">{avatar_char}</div>'
 
     with cols[0]:
         st.markdown(f"""
         <div style="display: flex; align-items: center; gap: 0.75rem;">
-            {avatar_html}
+            <div class="user-avatar" style="background: {avatar_bg}; box-shadow: 0 0 12px {avatar_glow};">{avatar_char}</div>
             <div>
                 <div style="font-weight: 600; color: #FFFFFF; font-size: 1rem; line-height: 1.2;">{st.session_state.username}</div>
                 <span class="role-badge {badge_class}">{st.session_state.role}</span>

@@ -328,58 +328,6 @@ class TestForesightAuth(unittest.TestCase):
         self.assertFalse(success)
         self.assertEqual(msg, "Administrator account creation is restricted.")
 
-    def test_google_oauth_role_mapping(self):
-        """4. Test Google OAuth email role mapping and unauthorized rejection."""
-        from auth.oauth import map_email_to_role
-        
-        # Default authorized emails
-        self.assertEqual(map_email_to_role("admin@foresight.ai"), "Administrator")
-        self.assertEqual(map_email_to_role("planner@foresight.ai"), "Inventory Planner")
-        self.assertEqual(map_email_to_role("viewer@foresight.ai"), "Viewer")
-        
-        # Registered user in database
-        from auth.users import register_new_user
-        register_new_user("Custom User", "custom@company.com", "pass12345", "Inventory Planner")
-        self.assertEqual(map_email_to_role("custom@company.com"), "Inventory Planner")
-        
-        # Unauthorized external email
-        self.assertIsNone(map_email_to_role("unauthorized_user@random.com"))
-
-    def test_google_oauth_credentials_safe_loading(self):
-        """5. Test safe OAuth credential loading across env vars and missing secrets.toml."""
-        from auth.google_auth import get_secret, get_oauth_credentials, is_google_oauth_configured
-        
-        # Save original env
-        orig_cid = os.environ.get("GOOGLE_CLIENT_ID")
-        orig_sec = os.environ.get("GOOGLE_CLIENT_SECRET")
-        orig_uri = os.environ.get("GOOGLE_REDIRECT_URI")
-        
-        try:
-            # Case A: Clean env (no keys defined) -> must NOT raise StreamlitSecretNotFoundError
-            if "GOOGLE_CLIENT_ID" in os.environ: del os.environ["GOOGLE_CLIENT_ID"]
-            if "GOOGLE_CLIENT_SECRET" in os.environ: del os.environ["GOOGLE_CLIENT_SECRET"]
-            if "GOOGLE_REDIRECT_URI" in os.environ: del os.environ["GOOGLE_REDIRECT_URI"]
-            
-            self.assertFalse(is_google_oauth_configured())
-            self.assertEqual(get_oauth_credentials(), (None, None, None))
-            self.assertIsNone(get_secret("NON_EXISTENT_KEY"))
-            
-            # Case B: Defined in env vars
-            os.environ["GOOGLE_CLIENT_ID"] = "test_cid"
-            os.environ["GOOGLE_CLIENT_SECRET"] = "test_sec"
-            os.environ["GOOGLE_REDIRECT_URI"] = "http://localhost:8501"
-            
-            self.assertTrue(is_google_oauth_configured())
-            self.assertEqual(get_oauth_credentials(), ("test_cid", "test_sec", "http://localhost:8501"))
-            self.assertEqual(get_secret("GOOGLE_CLIENT_ID"), "test_cid")
-        finally:
-            # Restore original env
-            for k, v in [("GOOGLE_CLIENT_ID", orig_cid), ("GOOGLE_CLIENT_SECRET", orig_sec), ("GOOGLE_REDIRECT_URI", orig_uri)]:
-                if v is not None:
-                    os.environ[k] = v
-                elif k in os.environ:
-                    del os.environ[k]
-
 
 if __name__ == "__main__":
     unittest.main()

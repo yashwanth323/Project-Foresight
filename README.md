@@ -20,8 +20,6 @@ Raw Sales CSV/XLSX ➔ Data Cleaning & Pipeline ➔ Feature Engineering (Lags, R
 ├── app.py                     # Main application entrypoint (Auth, Navigation, Session State)
 ├── auth/                      # Authentication & RBAC System
 │   ├── authentication.py      # Password verification & SHA-256 hashing
-│   ├── google_auth.py         # Google OAuth 2.0 API interaction & secret loader
-│   ├── oauth.py               # OAuth callback handler & email role mapping
 │   ├── session.py             # Session state initialization & top header
 │   ├── styles.py              # Enterprise dark glassmorphism styling
 │   ├── users.py               # Persistent user registry
@@ -94,18 +92,6 @@ Ensure all code, `.gitignore`, and `requirements.txt` are committed to your GitH
 2. Click **New app**.
 3. Select your GitHub repository, branch (`main`), and set **Main file path** to `app.py`.
 4. Click **Deploy**.
-
-### Step 3: Configure Streamlit Secrets (Optional for Google OAuth)
-In your Streamlit Cloud Dashboard, open **Settings ➔ Secrets** and paste the following snippet:
-
-```toml
-# Optional: Google OAuth 2.0 Credentials
-GOOGLE_CLIENT_ID = "your-google-client-id.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET = "your-google-client-secret"
-GOOGLE_REDIRECT_URI = "https://your-app-name.streamlit.app"
-```
-
-*Note: If OAuth credentials are omitted, FORESIGHT automatically hides the Google Sign-In button and operates seamlessly with built-in username/password authentication.*
 
 ---
 

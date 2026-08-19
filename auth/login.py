@@ -1,4 +1,4 @@
-"""Splash screen, login, and registration views for Project FORESIGHT."""
+"""Splash screen and login views for Project FORESIGHT."""
 from __future__ import annotations
 
 import base64
@@ -10,8 +10,6 @@ import streamlit as st
 from auth.authentication import authenticate_user
 from auth.session import login_user, init_session
 from auth.styles import inject_custom_css
-from auth.google_auth import get_google_auth_url, is_google_oauth_configured
-from auth.oauth import handle_google_oauth_callback
 
 
 def get_image_base64(img_path: Path) -> str:
@@ -100,14 +98,10 @@ def render_splash_screen():
 
 
 def show_login_screen():
-    """Display the production enterprise login screen with Google OAuth & Password auth."""
+    """Display the production enterprise login screen."""
     init_session()
     inject_custom_css()
     
-    # Process incoming Google OAuth authorization code callback
-    if handle_google_oauth_callback():
-        return
-
     # Check if splash needs to run
     if not st.session_state.get("splash_shown"):
         render_splash_screen()
@@ -153,59 +147,11 @@ def show_login_screen():
                 unsafe_allow_html=True
             )
             
-            # --- GOOGLE OAUTH 2.0 BUTTON & DIVIDER ---
-            if is_google_oauth_configured():
-                google_url = get_google_auth_url()
-                if google_url:
-                    st.markdown(
-                        f"""
-                        <a href="{google_url}" target="_self" style="text-decoration: none; display: block; width: 100%;">
-                            <div style="
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                gap: 12px;
-                                background-color: #FFFFFF;
-                                color: #1F2937;
-                                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-                                font-weight: 600;
-                                font-size: 0.95rem;
-                                padding: 10px 16px;
-                                border-radius: 8px;
-                                border: 1px solid #E5E7EB;
-                                shadow: 0 1px 3px rgba(0,0,0,0.12);
-                                transition: all 0.2s ease;
-                                cursor: pointer;
-                                text-align: center;
-                            ">
-                                <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M17.64 9.2c0-.74-.06-1.28-.19-1.84H9v3.34h4.96c-.1.83-.64 2.08-1.84 2.92l2.84 2.2c1.7-1.57 2.68-3.88 2.68-6.62z" fill="#4285F4"/>
-                                  <path d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.84-2.2c-.76.53-1.78.9-3.12.9-2.38 0-4.41-1.57-5.14-3.74L.88 13.04C2.38 16.03 5.45 18 9 18z" fill="#34A853"/>
-                                  <path d="M3.86 10.78c-.18-.53-.28-1.09-.28-1.78s.1-1.25.28-1.78L.88 4.96C.32 6.08 0 7.4 0 9c0 1.6.32 2.92.88 4.04l2.98-2.26z" fill="#FBBC05"/>
-                                  <path d="M9 3.58c1.32 0 2.5.46 3.44 1.34l2.58-2.58C13.46.89 11.43 0 9 0 5.45 0 2.38 1.97.88 4.96l2.98 2.26C4.59 5.05 6.62 3.58 9 3.58z" fill="#EA4335"/>
-                                </svg>
-                                Continue with Google
-                            </div>
-                        </a>
-                        """,
-                        unsafe_allow_html=True
-                    )
-
-                    # --- DIVIDER ---
-                    st.markdown(
-                        """
-                        <div style="display: flex; align-items: center; text-align: center; margin: 18px 0 16px 0; color: #9CA3AF; font-size: 0.78rem; font-weight: 600; letter-spacing: 1.5px;">
-                            <div style="flex: 1; border-bottom: 1px solid rgba(255, 255, 255, 0.1);"></div>
-                            <span style="padding: 0 12px; text-transform: uppercase;">OR</span>
-                            <div style="flex: 1; border-bottom: 1px solid rgba(255, 255, 255, 0.1);"></div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-
-            # --- NORMAL USERNAME/PASSWORD FORM ---
             email_or_user = st.text_input("Username or Email", placeholder="Enter your username or email", key="login_email")
-            password = st.text_input("Password", type="password", placeholder="Enter your password", key="login_password")
+            
+            show_password = st.checkbox("Show Password", key="show_password_cb")
+            pass_type = "default" if show_password else "password"
+            password = st.text_input("Password", type=pass_type, placeholder="Enter your password", key="login_password")
             
             c_opt1, c_opt2 = st.columns([1, 1])
             with c_opt1:
