@@ -127,6 +127,27 @@ def username_exists(username: str) -> bool:
     finally:
         conn.close()
 
+def load_users() -> dict[str, dict[str, Any]]:
+    """Return all active users from SQLite database formatted as a dictionary keyed by email."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE is_active = 1;")
+        rows = cursor.fetchall()
+        result: dict[str, dict[str, Any]] = {}
+        for r in rows:
+            u_dict = dict(r)
+            result[u_dict["email"].lower()] = {
+                "email": u_dict["email"],
+                "password": u_dict["password_hash"],
+                "username": u_dict["username"],
+                "role": u_dict["role"],
+                "full_name": u_dict["full_name"],
+            }
+        return result
+    finally:
+        conn.close()
+
 def get_user_by_email(email: str) -> dict[str, Any] | None:
     """Retrieve an active user record by email address."""
     conn = get_db_connection()

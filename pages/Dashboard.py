@@ -9,7 +9,7 @@ import pandas as pd
 
 from auth.session import init_session, load_data, render_header
 from auth.styles import inject_custom_css
-from auth.users import USERS
+from auth.database import load_users
 
 
 def apply_filters(clean_df: pd.DataFrame, forecast_df: pd.DataFrame, risks_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -129,7 +129,8 @@ def show_admin_dashboard():
         raw_count = len(raw_data) if raw_data is not None else 0
         st.metric("Database Status", f"{raw_count:,} Rows", "Raw Transactions")
     with c3:
-        st.metric("Active Users", f"{len(USERS)} Accounts", "Configured Roles")
+        active_users_count = len(load_users())
+        st.metric("Active Users", f"{active_users_count} Accounts", "Configured Roles")
     with c4:
         champ = comp_metrics.get("selected_model", "Random Forest") if comp_metrics else "Random Forest"
         st.metric("Last Model Training", champ, "Champion Model")

@@ -10,7 +10,7 @@ import pandas as pd
 
 from auth.session import init_session, load_data, render_header, ROOT
 from auth.styles import inject_custom_css
-from auth.users import USERS
+from auth.database import load_users
 from src.risk import RISK_CONFIG
 
 
@@ -171,14 +171,14 @@ def show_settings():
 
     with tab_users:
         st.subheader("Configured User Accounts & Permissions")
-        st.write("Registered user profiles stored in `auth/users.json`:")
+        st.write("Registered user profiles stored in SQLite Database (`data/foresight.db`):")
         
         users_list = []
-        for email, profile in USERS.items():
+        for email, profile in load_users().items():
             users_list.append({
                 "Name": profile["username"],
                 "Email Address": profile["email"],
-                "Password Security": "SHA-256 Hashed 🔒",
+                "Password Security": "bcrypt Hashed (12 Rounds) 🔒",
                 "Role Permission": profile["role"]
             })
         st.dataframe(pd.DataFrame(users_list), use_container_width=True, hide_index=True)
