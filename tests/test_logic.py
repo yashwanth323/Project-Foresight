@@ -236,95 +236,96 @@ class TestForesightLogic(unittest.TestCase):
 
 
 class TestForesightAuth(unittest.TestCase):
-    """Test cases for registration, role security, password hashing, and login verification."""
+    """Test cases for registration, role security, bcrypt password hashing, and login verification."""
     
     def setUp(self):
         import tempfile
-        import auth.users
+        import auth.database
         
-        # Backup original database path and create an isolated temp test database
-        self.original_json_path = auth.users.USERS_JSON_PATH
+        # Backup original DB path and initialize an isolated temp test database
+        self.original_db_path = auth.database.DB_PATH
         self.test_dir = tempfile.TemporaryDirectory()
-        auth.users.USERS_JSON_PATH = Path(self.test_dir.name) / "users_test.json"
-        
-        # Load test database with default users
-        default_users = auth.users.get_default_users()
-        auth.users.save_users(default_users)
+        auth.database.DB_PATH = Path(self.test_dir.name) / "foresight_test.db"
+        auth.database.initialize_database()
 
     def tearDown(self):
-        import auth.users
-        auth.users.USERS_JSON_PATH = self.original_json_path
+        import auth.database
+        auth.database.DB_PATH = self.original_db_path
         self.test_dir.cleanup()
 
     def test_default_logins(self):
-        """1. Test that the three default accounts verify successfully."""
-        from auth.users import verify_credentials
+        """1. Test that the three seeded default accounts verify successfully."""
+        from auth.database import authenticate_user
         
         # Administrator
-        admin = verify_credentials("admin@foresight.ai", "admin123")
+        admin = authenticate_user("admin@foresight.ai", "admin123")
         self.assertIsNotNone(admin)
-        self.assertEqual(admin["username"], "Administrator")
         self.assertEqual(admin["role"], "Administrator")
         
         # Planner
-        planner = verify_credentials("planner@foresight.ai", "planner123")
+        planner = authenticate_user("planner@foresight.ai", "planner123")
         self.assertIsNotNone(planner)
-        self.assertEqual(planner["username"], "Planner")
+        self.assertEqual(planner["role"], "Inventory Planner")
         
         # Viewer
-        viewer = verify_credentials("viewer@foresight.ai", "viewer123")
+        viewer = authenticate_user("viewer@foresight.ai", "viewer123")
         self.assertIsNotNone(viewer)
-        self.assertEqual(viewer["username"], "Viewer")
+        self.assertEqual(viewer["role"], "Viewer")
         
         # Test case-insensitivity and username login support
-        admin_by_name = verify_credentials("Administrator", "admin123")
-        self.assertIsNotNone(admin_by_name)
-        self.assertEqual(admin_by_name["email"], "admin@foresight.ai")
+        admin_by_username = authenticate_user("admin", "admin123")
+        self.assertIsNotNone(admin_by_username)
+        self.assertEqual(admin_by_username["email"], "admin@foresight.ai")
 
     def test_new_user_registration_and_login(self):
-        """2. Test registration, role default, hashing, duplicate prevention, and login validation."""
-        from auth.users import register_new_user, verify_credentials
+        """2. Test user creation, bcrypt hashing, duplicate prevention, and login validation."""
+        from auth.database import create_user, authenticate_user
         
-        # Register a valid new Planner
-        success, msg = register_new_user("New Planner", "new_planner@foresight.ai", "securePass123", "Inventory Planner")
+        # Register a valid new Planner (password >= 8 chars, 1 upper, 1 lower, 1 digit)
+        success, msg = create_user("New Planner", "newplanner", "new_planner@foresight.ai", "SecurePass123", "Inventory Planner")
         self.assertTrue(success)
         
-        # Verify new user can log in
-        user = verify_credentials("new_planner@foresight.ai", "securePass123")
-        self.assertIsNotNone(user)
-        self.assertEqual(user["username"], "New Planner")
-        self.assertEqual(user["role"], "Inventory Planner")
+        # Verify new user can log in with email or username
+        user_by_email = authenticate_user("new_planner@foresight.ai", "SecurePass123")
+        self.assertIsNotNone(user_by_email)
+        self.assertEqual(user_by_email["username"], "newplanner")
+        self.assertEqual(user_by_email["role"], "Inventory Planner")
+        
+        user_by_username = authenticate_user("newplanner", "SecurePass123")
+        self.assertIsNotNone(user_by_username)
+        self.assertEqual(user_by_username["email"], "new_planner@foresight.ai")
         
         # Verify duplicate username rejection
-        success, msg = register_new_user("New Planner", "other_email@foresight.ai", "password123", "Inventory Planner")
+        success, msg = create_user("Other Planner", "newplanner", "other_email@foresight.ai", "SecurePass123", "Inventory Planner")
         self.assertFalse(success)
-        self.assertEqual(msg, "Username is already taken.")
+        self.assertIn("already taken", msg)
         
         # Verify duplicate email rejection
-        success, msg = register_new_user("Other Planner", "new_planner@foresight.ai", "password123", "Inventory Planner")
+        success, msg = create_user("Other Planner", "otherplanner", "new_planner@foresight.ai", "SecurePass123", "Inventory Planner")
         self.assertFalse(success)
-        self.assertEqual(msg, "Email address is already registered.")
+        self.assertIn("already registered", msg)
 
     def test_registration_validations_and_security(self):
-        """3. Test field completion, email format, password length, and admin role security."""
-        from auth.users import register_new_user
+        """3. Test field completion, email format, password strength, and admin role security."""
+        from auth.database import create_user
         
-        # Empty fields
-        success, msg = register_new_user("", "test@test.com", "password", "Inventory Planner")
+        # Empty full name
+        success, msg = create_user("", "username", "test@test.com", "SecurePass123", "Inventory Planner")
         self.assertFalse(success)
+        self.assertEqual(msg, "Full name is required.")
         
         # Invalid email format
-        success, msg = register_new_user("User1", "invalid_email_format", "password", "Inventory Planner")
+        success, msg = create_user("User One", "userone", "invalid_email", "SecurePass123", "Inventory Planner")
         self.assertFalse(success)
-        self.assertEqual(msg, "Invalid email address format.")
+        self.assertIn("valid email", msg)
         
-        # Weak password (length < 6)
-        success, msg = register_new_user("User2", "user2@test.com", "12345", "Inventory Planner")
+        # Weak password (length < 8)
+        success, msg = create_user("User Two", "usertwo", "user2@test.com", "Pass1", "Inventory Planner")
         self.assertFalse(success)
-        self.assertEqual(msg, "Password must be at least 6 characters long.")
+        self.assertIn("at least 8 characters", msg)
         
         # Role Security - new user cannot sign up as Administrator
-        success, msg = register_new_user("Hacker Admin", "hacker@foresight.ai", "password123", "Administrator")
+        success, msg = create_user("Hacker Admin", "hackeradmin", "hacker@foresight.ai", "SecurePass123", "Administrator")
         self.assertFalse(success)
         self.assertEqual(msg, "Administrator account creation is restricted.")
 

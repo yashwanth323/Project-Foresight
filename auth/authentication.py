@@ -1,10 +1,9 @@
-"""Authentication wrapper logic for Project FORESIGHT."""
+"""Authentication wrapper module for Project FORESIGHT."""
 from __future__ import annotations
 
-from auth.users import verify_credentials, User
+from typing import Any
+from auth.database import authenticate_user as db_authenticate_user
 
-def authenticate_user(email: str, password: str) -> User | None:
-    """Validate user credentials and return the user profile if valid."""
-    if not email or not password:
-        return None
-    return verify_credentials(email, password)
+def authenticate_user(email_or_username: str, password_raw: str) -> dict[str, Any] | None:
+    """Validate user credentials against SQLite database and return user record if valid."""
+    return db_authenticate_user(email_or_username, password_raw)

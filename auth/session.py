@@ -7,6 +7,7 @@ import streamlit as st
 import pandas as pd
 import joblib
 
+from auth.database import initialize_database
 from src.forecast import forecast_next_days, train_forecast_model
 from src.pipeline import run_pipeline, create_demo_sales, load_data as pipe_load_data
 from src.risk import score_inventory_risk, recommendations
@@ -14,7 +15,8 @@ from src.risk import score_inventory_risk, recommendations
 ROOT = Path(__file__).resolve().parents[1]
 
 def init_session():
-    """Initialize default session state keys if not already present."""
+    """Initialize default session state keys and database if not already present."""
+    initialize_database()
     if "logged_in" not in st.session_state:
         st.session_state.logged_in = False
     if "username" not in st.session_state:
